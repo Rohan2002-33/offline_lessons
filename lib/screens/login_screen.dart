@@ -26,7 +26,24 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (_) => const LessonListScreen()));
       }
     } catch (e) {
-      setState(() => _error = 'Login failed: $e');
+      String message = 'Login failed. Please check your email and password.';
+
+      if (e is AuthApiException) {
+        final lower = e.message.toLowerCase();
+
+        if (lower.contains('invalid login credentials')) {
+          message =
+              'No matching account was found for this email/password. Create or use a valid Supabase user in Authentication > Users.';
+        } else if (lower.contains('email not confirmed')) {
+          message = 'Please confirm your email before signing in.';
+        } else if (lower.contains('user not found')) {
+          message = 'This account does not exist. Please create the user in Supabase first.';
+        } else {
+          message = 'Login failed: ${e.message}';
+        }
+      }
+
+      setState(() => _error = message);
     } finally {
       setState(() => _loading = false);
     }
@@ -49,7 +66,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextField(controller: _email, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder())),
                 const SizedBox(height: 12),
                 TextField(controller: _password, obscureText: true, decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder())),
-                if (_error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_error!, style: const TextStyle(color: Colors.red))),
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Use a valid email/password created in Supabase Dashboard → Authentication → Users.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
